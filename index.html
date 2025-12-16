@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Toca Shop Mini App</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <style>
+    :root{
+      --bg: var(--tg-theme-bg-color, #0b0f17);
+      --text: var(--tg-theme-text-color, #ffffff);
+      --hint: var(--tg-theme-hint-color, rgba(255,255,255,.65));
+      --link: var(--tg-theme-link-color, #7dd3fc);
+      --btn: var(--tg-theme-button-color, #36c37b);
+      --btnText: var(--tg-theme-button-text-color, #ffffff);
+
+      --glass: rgba(255,255,255,.10);
+      --border: rgba(255,255,255,.14);
+      --shadow: 0 16px 55px rgba(0,0,0,.38);
+
+      --good:#f59e0b;
+      --sale:#ff5c5c;
+
+      --safe-top: env(safe-area-inset-top);
+      --safe-bottom: env(safe-area-inset-bottom);
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      color: var(--text);
+
+      /* Радужный переливающийся фон */
+      background: linear-gradient(
+        120deg,
+        #ff5aa5,
+        #8b5cf6,
+        #22d3ee,
+        #22c55e,
+        #f59e0b,
+        #ff5aa5
+      );
+      background-size: 400% 400%;
+      animation: rainbowBG 18s ease infinite;
+
+      padding: calc(14px + var(--safe-top)) 14px calc(20px + var(--safe-bottom));
+    }
+
+    @keyframes rainbowBG {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .wrap{max-width:430px;margin:0 auto;}
+
+    .panel{
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 22px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .spark{
+      position:absolute; inset:-200px -200px auto auto;
+      width:420px; height:420px;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.18), transparent 62%);
+      pointer-events:none;
+    }
+
+    .header{
+      display:flex; align-items:center; gap:12px;
+      padding: 10px 12px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+    .logo{
+      width:38px; height:38px; border-radius:12px;
+      display:grid; place-items:center;
+      background: linear-gradient(135deg,#ff6aa2,#8b5cf6);
+      font-weight:900;
+      user-select:none;
+      box-shadow: 0 12px 26px rgba(139,92,246,.25);
+    }
+    .htext{flex:1; min-width:0}
+    .title{font-weight:950; letter-spacing:-.2px; line-height:1.05}
+    .sub{font-size:12px; color: var(--hint); margin-top:2px}
+
+    .pill{
+      display:flex; align-items:center; gap:6px;
+      padding: 7px 10px;
+      border-radius:999px;
+      background: rgba(255,224,138,.95);
+      color:#5a3b00;
+      font-weight:950;
+      font-size:13px;
+      user-select:none;
+    }
+
+    .promo{
+      margin-top:14px;
+      padding: 18px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.16);
+      background:
+        radial-gradient(140% 160% at 15% 0%, rgba(88,166,255,.95) 0%, rgba(37,99,235,.9) 45%, rgba(30,64,175,.95) 100%);
+      box-shadow: 0 20px 60px rgba(37,99,235,.25);
+      position:relative;
+      overflow:hidden;
+    }
+    .promo:before{
+      content:"";
+      position:absolute; inset:-80px -80px auto auto;
+      width:220px; height:220px;
+      background: radial-gradient(circle at 35% 35%, rgba(255,255,255,.28), transparent 60%);
+      transform: rotate(18deg);
+      pointer-events:none;
+    }
+    .badge{
+      display:inline-block;
+      padding: 5px 10px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:950;
+      background: rgba(255,215,90,.92);
+      color:#4a2d00;
+      margin-bottom:10px;
+      user-select:none;
+    }
+    .promo h2{margin:0; font-size:28px; letter-spacing:-.8px}
+    .promo p{margin:8px 0 0; opacity:.92; line-height:1.25}
+
+    .grid{
+      margin-top:12px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .card{
+      background: rgba(255,255,255,.92);
+      color: #0f172a;
+      border-radius: 18px;
+      padding: 14px;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      box-shadow: 0 12px 28px rgba(2,6,23,.20);
+      transform: translateZ(0);
+      transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+      cursor:pointer;
+      user-select:none;
+      position: relative;
+      overflow:hidden;
+    }
+
+    /* Пульсация hover+tap */
+    @keyframes pulse {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.04); }
+      100% { transform: scale(1); }
+    }
+    .card:hover,
+    .chip:hover,
+    .btn:hover{
+      animation: pulse .6s ease-in-out infinite;
+    }
+    .card:active,
+    .chip:active,
+    .btn:active{
+      animation: pulse .25s ease-in-out infinite;
+    }
+
+    .iconbox{
+      width:56px; height:56px; border-radius:16px;
+      display:grid; place-items:center;
+      flex:0 0 auto;
+      background: rgba(15,23,42,.08);
+      border: 1px solid rgba(15,23,42,.08);
+    }
+    .iconbox img{
+      width: 42px; height: 42px;
+      object-fit: contain;
+      display:block;
+    }
+
+    .ctext{flex:1; min-width:0}
+    .name{
+      font-weight:950;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .desc{font-size:12px; color:#64748b; margin-top:4px; line-height:1.25}
+    .price{margin-top:9px; font-weight:1000}
+
+    .tag{
+      font-size:11px;
+      padding: 4px 9px;
+      border-radius:999px;
+      font-weight:950;
+      color:white;
+      display:inline-block;
+    }
+    .tag.good{background: var(--good);}
+    .tag.sale{background: var(--sale);}
+    .tag.owned{background: rgba(15,23,42,.65);}
+
+    .btn{
+      border:0;
+      background: var(--btn);
+      color: var(--btnText);
+      font-weight:1000;
+      padding: 10px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      white-space:nowrap;
+      transition: transform .12s ease, filter .12s ease;
+    }
+    .btn.secondary{
+      background: rgba(15,23,42,.10);
+      color:#0f172a;
+    }
+
+    .actions{
+      margin-top:12px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .chip{
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.10);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 16px;
+      font-weight:950;
+      cursor:pointer;
+      transition: transform .12s ease, filter .12s ease;
+      user-select:none;
+      flex: 1 1 160px;
+    }
+    .chip small{display:block; font-weight:800; opacity:.75; margin-top:2px}
+
+    .footer{
+      margin-top:14px;
+      text-align:center;
+      font-size:12px;
+      color: rgba(255,255,255,.78);
+    }
+    .footer a{color: var(--link); text-decoration:none; font-weight:950}
+
+    /* Toast */
+    .toast{
+      position: fixed;
+      left:50%;
+      bottom: calc(14px + var(--safe-bottom));
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(15,23,42,.88);
+      color: white;
+      border: 1px solid rgba(255,255,255,.12);
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-weight:900;
+      font-size:13px;
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s ease, transform .18s ease;
+      max-width: 92vw;
+      text-align:center;
+      box-shadow: 0 14px 40px rgba(0,0,0,.35);
+    }
+    .toast.show{
+      opacity:1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <div class="spark"></div>
+
+      <div class="header">
+        <div class="logo">🛍️</div>
+        <div class="htext">
+          <div class="title">Toca Shop</div>
+          <div class="sub">Mini App • все кнопки ведут в бота/в профиль</div>
+        </div>
+        <div class="pill"><span id="stars">0</span> ⭐</div>
+      </div>
+
+      <div class="promo">
+        <div class="badge">ХИТ ПРОДАЖ</div>
+        <h2>Toca World Map</h2>
+        <p>Открой весь мир. Все локации по цене перекуса!</p>
+      </div>
+
+      <div class="grid" id="cards"></div>
+
+      <div class="actions">
+        <div class="chip" onclick="goBot('menu')">
+          Открыть бота
+          <small>@tocabocaxbot</small>
+        </div>
+        <div class="chip" onclick="goProfile()">
+          Написать @QLEWETA
+          <small>support / вопросы</small>
+        </div>
+        <div class="chip" onclick="copyUsername()">
+          Скопировать @QLEWETA
+          <small>вставишь в чат</small>
+        </div>
+        <div class="chip" onclick="shareApp()">
+          Поделиться
+          <small>ботом в Telegram</small>
+        </div>
+      </div>
+
+      <div class="footer">
+        Любая надпись <a href="#" onclick="goProfile();return false;">@QLEWETA</a> ведёт к тебе в Telegram.
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">OK</div>
+
+  <script>
+    // === ТВОИ ССЫЛКИ ===
+    const BOT = "https://t.me/tocabocaxbot";
+    const PROFILE_USERNAME = "qleweta";
+    const PROFILE = "https://t.me/" + PROFILE_USERNAME;
+
+    // === СЮДА ВСТАВИШЬ ССЫЛКИ НА PNG/WEBP ИКОНКИ (рекомендую 128x128) ===
+    const ICON_LOCATIONS = "https://i.postimg.cc/q7Q3cnQv/D3C17A27_0F09_4FFF_B7FC_680770174937.jpg"; // ← ВСТАВЬ
+    const ICON_PASS      = "https://i.postimg.cc/XXMGNgNZ/100F02A0_6967_4BF8_8152_03801C9913F9.jpg";      // ← ВСТАВЬ
+    const ICON_HELP      = "https://i.postimg.cc/4nC7414t/EBE884E7_7C3D_4C83_B56D_86C1052860C2.jpg";      // ← ВСТАВЬ
+
+    const tg = window.Telegram?.WebApp;
+
+    // Карточки
+    const ITEMS = [
+      {
+        key: "all_locations",
+        iconImg: ICON_LOCATIONS,
+        title: "Все локации",
+        tag: { text: "ВЫГОДНО", class: "good" },
+        desc: "Доступ ко всем текущим локациям.",
+        price: "300 ⭐",
+        button: "Открыть"
+      },
+      {
+        key: "subscription",
+        iconImg: ICON_PASS,
+        title: "Подписка",
+        tag: { text: "SALE -90%", class: "sale" },
+        desc: "Новые доп. активы при каждом обновлении.",
+        price: "90 ⭐",
+        button: "Открыть"
+      },
+      {
+        action: "profile",
+        iconImg: ICON_HELP,
+        title: "Поддержка",
+        tag: { text: "@QLEWETA", class: "owned" },
+        desc: "Вопросы/проблемы. Пиши напрямую.",
+        price: "Ответ быстро ⚡",
+        button: "Написать"
+      }
+    ];
+
+    function haptic(type="impact", style="light"){
+      try{
+        if(!tg?.HapticFeedback) return;
+        if(type === "impact") tg.HapticFeedback.impactOccurred(style);
+        if(type === "notification") tg.HapticFeedback.notificationOccurred(style); // success/error/warning
+        if(type === "selection") tg.HapticFeedback.selectionChanged();
+      }catch(e){}
+    }
+
+    function toast(msg){
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      setTimeout(()=> el.classList.remove("show"), 1400);
+    }
+
+    function openLink(url){
+      if (tg?.openTelegramLink) tg.openTelegramLink(url);
+      else window.location.href = url;
+    }
+
+    // Все кнопки ведут в бота с payload
+    function goBot(payload){
+      haptic("impact","light");
+      openLink(`${BOT}?start=${encodeURIComponent(payload)}`);
+    }
+
+    // Все @QLEWETA ведут к тебе
+    function goProfile(){
+      haptic("impact","light");
+      openLink(PROFILE);
+    }
+
+    async function copyUsername(){
+      haptic("selection");
+      const text = "@" + PROFILE_USERNAME;
+      try{
+        await navigator.clipboard.writeText(text);
+        toast("Скопировано: " + text);
+        haptic("notification","success");
+      }catch(e){
+        toast("Не смог скопировать");
+        haptic("notification","error");
+      }
+    }
+
+    // Рабочий share в Telegram
+    function shareApp(){
+      haptic("impact","light");
+      const shareUrl = "https://t.me/share/url?url=" + encodeURIComponent(BOT) + "&text=" + encodeURIComponent("Toca Shop");
+      if (tg?.openTelegramLink) tg.openTelegramLink(shareUrl);
+      else {
+        navigator.clipboard.writeText(BOT);
+        toast("Ссылка на бота скопирована");
+      }
+    }
+
+    function render(){
+      const root = document.getElementById("cards");
+      root.innerHTML = "";
+
+      ITEMS.forEach(item=>{
+        const card = document.createElement("div");
+        card.className = "card";
+        card.onclick = () => {
+          if(item.action === "profile") goProfile();
+          else goBot(item.key);
+        };
+
+        card.innerHTML = `
+          <div class="iconbox">
+            <img src="${item.iconImg}" alt="">
+          </div>
+          <div class="ctext">
+            <div class="name">
+              ${item.title}
+              ${item.tag ? `<span class="tag ${item.tag.class}">${item.tag.text}</span>` : ""}
+            </div>
+            <div class="desc">${item.desc}</div>
+            <div class="price">${item.price}</div>
+          </div>
+          <button class="btn ${item.action === "profile" ? "secondary" : ""}" type="button"
+            onclick="event.stopPropagation(); ${item.action === "profile" ? "goProfile()" : `goBot('${item.key}')`}">
+            ${item.button}
+          </button>
+        `;
+        root.appendChild(card);
+      });
+    }
+
+    // Баланс: 0..999 по кругу
+    let stars = 0;
+    const maxStars = 999;
+    const elStars = document.getElementById("stars");
+    setInterval(() => {
+      stars++;
+      if (stars > maxStars) stars = 0;
+      elStars.textContent = stars;
+    }, 20);
+
+    // Init Telegram WebApp
+    if (tg){
+      tg.ready();
+      tg.expand();
+    }
+
+    render();
+  </script>
+</body>
+</html>
