@@ -328,7 +328,7 @@
       </div>
 
       <div class="footer">
-        Любая надпись <a href="#" onclick="goProfile();return false;">@QLEWETA</a> ведёт к тебе в Telegram.
+        Написать разработчику <a href="#" onclick="goProfile();return false;">@QLEWETA</a>
       </div>
     </div>
   </div>
@@ -401,9 +401,15 @@
     }
 
     // Все кнопки ведут в бота с payload
-    function goBot(payload){
+    function goBot(_payload){
       haptic("impact","light");
-      openLink(`${BOT}?start=${encodeURIComponent(payload)}`);
+      // Мы запустили Mini App из бота: просто закрываем, чтобы вернуться обратно в чат
+      if (tg?.close) {
+        setTimeout(() => tg.close(), 120);
+        return;
+      }
+      // Если вдруг открыто в обычном браузере — просто открыть бота без /start
+      openLink(BOT);
     }
 
     // Все @QLEWETA ведут к тебе
